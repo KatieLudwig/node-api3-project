@@ -50,20 +50,28 @@ router.delete('/:id', validateUserId, async (req, res, next) => {
   }
 });
 
-router.get('/:id/posts', validateUserId, (req, res) => {
-
+router.get('/:id/posts', validateUserId, async (req, res, next) => {
+  try {
+    const posts = await User.getUserPosts(req.params.id);
+    res.json(posts);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
-  // RETURN THE NEWLY CREATED USER POST
-  // this needs a middleware to verify user id
-  // and another middleware to check that the request body is valid
-  console.log(req.user);
-  console.log(req.text);
-
+router.post('/:id/posts', validateUserId, validatePost, async (req, res, next) => {
+ try {
+   const newPost = await Post.insert({
+     text: req.text,
+     user_id: req.params.id,
+   });
+   res.status(201).json(newPost);
+ } catch (err) {
+   next(err);
+ }
 });
 
-router.use((err, req, res, next) => {
+router.use((err, req, res) => {
   res.status(err.status || 500).json({
     customMessage: 'something went wrong',
     message: err.message,
@@ -71,5 +79,4 @@ router.use((err, req, res, next) => {
   });
 })
 
-// do not forget to export the router
 module.exports = router;
